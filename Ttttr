@@ -1,0 +1,91 @@
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local root = char:WaitForChild("HumanoidRootPart")
+
+-- GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 160, 0, 120)
+frame.Position = UDim2.new(0, 20, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.Active = true
+frame.Draggable = true
+
+-- ปุ่ม Fly
+local flyBtn = Instance.new("TextButton", frame)
+flyBtn.Size = UDim2.new(0.9, 0, 0, 40)
+flyBtn.Position = UDim2.new(0.05, 0, 0.1, 0)
+flyBtn.Text = "Fly: OFF"
+flyBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+flyBtn.TextColor3 = Color3.new(1,1,1)
+
+-- ปุ่ม Speed
+local speedBtn = Instance.new("TextButton", frame)
+speedBtn.Size = UDim2.new(0.9, 0, 0, 40)
+speedBtn.Position = UDim2.new(0.05, 0, 0.55, 0)
+speedBtn.Text = "Speed: OFF"
+speedBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+speedBtn.TextColor3 = Color3.new(1,1,1)
+
+-- สถานะ
+local flying = false
+local speedOn = false
+local bodyVelocity
+
+-- Fly
+flyBtn.MouseButton1Click:Connect(function()
+	flying = not flying
+	
+	if flying then
+		flyBtn.Text = "Fly: ON"
+		flyBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		
+		bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+		bodyVelocity.Velocity = Vector3.new(0,0,0)
+		bodyVelocity.Parent = root
+		
+	else
+		flyBtn.Text = "Fly: OFF"
+		flyBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		
+		if bodyVelocity then
+			bodyVelocity:Destroy()
+		end
+	end
+end)
+
+-- Speed
+speedBtn.MouseButton1Click:Connect(function()
+	speedOn = not speedOn
+	
+	if speedOn then
+		speedBtn.Text = "Speed: ON"
+		speedBtn.BackgroundColor3 = Color3.fromRGB(50,200,50)
+		humanoid.WalkSpeed = 50
+	else
+		speedBtn.Text = "Speed: OFF"
+		speedBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+		humanoid.WalkSpeed = 16
+	end
+end)
+
+-- ควบคุมทิศบิน
+local UIS = game:GetService("UserInputService")
+
+game:GetService("RunService").RenderStepped:Connect(function()
+	if flying and bodyVelocity then
+		local moveDir = Vector3.new(0,0,0)
+		
+		if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + workspace.CurrentCamera.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - workspace.CurrentCamera.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - workspace.CurrentCamera.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + workspace.CurrentCamera.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0,1,0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0,1,0) end
+		
+		bodyVelocity.Velocity = moveDir * 60
+	end
+end)
